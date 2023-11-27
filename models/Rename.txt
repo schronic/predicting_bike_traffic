@@ -1,0 +1,13 @@
+TODO
+
+- Run Default Setting for all
+
+ 
+
+Encode the location data. Multiple counters per location
+Outliers
+
+Overfitting (XGB)
+Cat boost model
+
+Mean
