@@ -60,10 +60,10 @@ def residual_plot(y_pred, y_test, title, path):
     df_viz = pd.DataFrame({"y_true": y_test, "y_pred": y_pred}).sample(
         10000, random_state=0
     )
-    
-    plt.savefig(f'{path}/residual_plot_{title}.png')
 
     df_viz.plot.scatter(x="y_true", y="y_pred", s=8, alpha=0.1, ax=ax)
+    plt.savefig(f'{path}/residual_plot_{title}.png')
+    plt.show()
     
     
 
@@ -91,7 +91,6 @@ def rmse_test_train_plot(params, title, path):
     plt.grid()
     
     plt.savefig(f'{path}/rmse_test_train_plot_{title}.png')
-    
     plt.show()
     
     
@@ -131,8 +130,7 @@ def feature_importance(features, importances, title, path):
 
     title = f'{title}: Top 10 Feature Importances'
     ax.set_title(title,
-                 loc ='left', )
+                 loc ='left')
     
     plt.savefig(f'{path}/{title}.png')
-
     plt.show()

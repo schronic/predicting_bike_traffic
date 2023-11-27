@@ -77,7 +77,3 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1)
     cv_results = pd.DataFrame(grid_search.cv_results_)
     cv_results_file = f"{timestamp}_results.csv"
     cv_results.to_csv(os.path.join(save_path, cv_results_file), index=False)
-
-    # Saving the best model
-    best_model_file = f"{timestamp}_best_estimator.pkl"
-    dump(grid_search.best_estimators_, os.path.join(save_path, best_model_file))
