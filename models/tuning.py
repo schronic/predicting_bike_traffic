@@ -30,13 +30,15 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1)
     date_features = ["hour_cos", "hour_sin", "weekday_cos", "weekday_sin", 
                  "day_cos", "day_sin", "week_cos", "week_sin", "month_cos", "month_sin"]
 
-    numeric_features = ['latitude', 'longitude', 'temp', 'humidity', 'precip', 'windspeed', 'cloudcover']
-    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%'
+    numeric_features = ['temp', 'humidity', 'precip', 'cloudcover']
+    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 'windspeed' 
 
-    categorical_features = ["year", "counter_name", "site_name"]
+    categorical_features = ["counter_name", "site_name"]
+    # Removed:  "year"
 
-    binary_features = ["precipprob", "in_Lockdown", "is_Rush_Hour", "is_Bank_Holiday", 
+    binary_features = ["precipprob", "in_Lockdown", "is_Bank_Holiday", 
                        "if_School_Holiday", "is_workday"]
+    # Removed:  "is_Rush_Hour"
 
     # Function to transform and add additional features
     feature_transformer = FunctionTransformer(feature_engineering._additional_features)
@@ -46,7 +48,7 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1)
         ("numeric_scaler", StandardScaler(), numeric_features),
         ("categorical_onehot", OneHotEncoder(handle_unknown="ignore"), categorical_features),
         ("binary_passthrough", "passthrough", binary_features),
-        ("date_passthrough", "passthrough", date_features)
+        ("date_onehot", "passthrough", date_features)
     ])
 
     # Full pipeline including model
