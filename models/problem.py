@@ -27,8 +27,12 @@ def _read_data(path, f_name):
     return X_df, y_array
 
 
-def get_train_data(path="."):
-    f_name = "train.parquet"
+def get_train_data(path=".", basic=True):
+    if basic:
+        f_name = "train.parquet"
+    else:
+        f_name = "train_dropped.parquet.gzip"
+        
     return _read_data(path, f_name)
 
 

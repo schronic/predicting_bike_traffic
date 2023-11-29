@@ -12,7 +12,7 @@ import feature_engineering
 import problem
 
 
-def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1):
+def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1, cyclic=True, basic=True):
     """
     Optimizes a given estimator using grid search and saves the results.
 
@@ -27,8 +27,13 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1)
     
     
     # Feature categories
-    date_features = ["hour_cos", "hour_sin", "weekday_cos", "weekday_sin", 
-                 "day_cos", "day_sin", "week_cos", "week_sin", "month_cos", "month_sin"]
+    if cyclic == True:
+        date_features = ["hour_cos", "hour_sin", "weekday_cos", "weekday_sin", 
+                     "day_cos", "day_sin", "week_cos", "week_sin", "month_cos", "month_sin"]
+        cyclic_condition = ("date_passthrough", "passthrough", date_features)
+    else:
+        date_features = ["hour", "weekday", "day", "week", "month"]
+        cyclic_condition = ("date_onehot", OneHotEncoder(handle_unknown="ignore"), date_features)
 
     numeric_features = ['temp', 'humidity', 'precip', 'cloudcover']
     # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 'windspeed' 
@@ -48,14 +53,14 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1)
         ("numeric_scaler", StandardScaler(), numeric_features),
         ("categorical_onehot", OneHotEncoder(handle_unknown="ignore"), categorical_features),
         ("binary_passthrough", "passthrough", binary_features),
-        ("date_onehot", "passthrough", date_features)
+        cyclic_condition
     ])
 
     # Full pipeline including model
     full_pipeline = make_pipeline(feature_transformer, data_preprocessor, model)
 
     # Loading training data
-    X_train, y_train = problem.get_train_data('..')
+    X_train, y_train = problem.get_train_data('..', basic=basic)
     
 
     # Time series cross-validation

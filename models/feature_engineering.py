@@ -58,7 +58,7 @@ def encode_date_features(X):
         X[f'{col}_sin'] = X[col].replace(X[col].unique(), cos_transform)
 
     # Dropping the original date-related columns
-    return X.drop(columns=['date', 'hour', 'weekday', 'day', 'week', 'month'])
+    return X#.drop(columns=['date', 'hour', 'weekday', 'day', 'week', 'month'])
 
 def check_school_holidays(X):
     """

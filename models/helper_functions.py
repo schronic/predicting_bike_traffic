@@ -11,7 +11,7 @@ def predict_final_test(pipe):
     final_test_pred = pipe.predict(final_test)
     submission = pd.DataFrame(final_test_pred, columns=['log_bike_count']).reset_index(names=['Id'])
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
-    submission.to_csv(f'../submissions/{timestamp}', index=False)
+    submission.to_csv(f'../submissions/{timestamp}.csv', index=False)
     
     
 def sample_day_plot(X_test, y_pred, y_test, title, path):
