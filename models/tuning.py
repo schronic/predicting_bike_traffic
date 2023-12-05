@@ -28,22 +28,21 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1,
     
     # Feature categories
     if cyclic == True:
-        date_features = ["hour_cos", "hour_sin", "weekday_cos", "weekday_sin", 
-                     "day_cos", "day_sin", "week_cos", "week_sin", "month_cos", "month_sin"]
+        date_features = ["hour_cos", "hour_sin", "month_cos", "month_sin", "weekday_cos", "weekday_sin", "day_cos", "day_sin",
+                         "week_cos", "week_sin"]
         cyclic_condition = ("date_passthrough", "passthrough", date_features)
     else:
-        date_features = ["hour", "weekday", "day", "week", "month"]
+        date_features = ["hour", "month"]
         cyclic_condition = ("date_onehot", OneHotEncoder(handle_unknown="ignore"), date_features)
+        # Removed: "day", "week", "weekday", 
 
-    numeric_features = ['temp', 'humidity', 'precip', 'cloudcover']
-    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 'windspeed' 
+    numeric_features = ['temp', 'precip', 'cloudcover', 'windspeed', 'humidity']
+    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 
 
-    categorical_features = ["counter_name", "site_name"]
-    # Removed:  "year"
+    categorical_features = ["counter_name", "site_name", "year"]
 
-    binary_features = ["precipprob", "in_Lockdown", "is_Bank_Holiday", 
-                       "if_School_Holiday", "is_workday"]
-    # Removed:  "is_Rush_Hour"
+    binary_features = ["precipprob", "is_Bank_Holiday", "if_School_Holiday", "is_workday"]
+    # Removed:  "is_Rush_Hour", "in_Lockdown"
 
     # Function to transform and add additional features
     feature_transformer = FunctionTransformer(feature_engineering._additional_features)
