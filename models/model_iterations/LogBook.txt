@@ -1,0 +1,4 @@
+Iteration 1: Full dataset with extensive hyperparameter grid
+Iteration 2: Increased regularization in grid
+Iteration 3: Dropped velib data
+Iteration 4: Dropped more data and added more constraines in grid
