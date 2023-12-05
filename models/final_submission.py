@@ -5,7 +5,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.pipeline import make_pipeline
 from xgboost import XGBRegressor
-from jours_feries_france.compute import JoursFeries
 
 np.random.seed(42)
 
@@ -77,7 +76,7 @@ def check_school_holidays(X):
     - Series indicating if the dates are school holidays.
     """
 
-    school_holidays = pd.read_csv('../data/school_holidays.csv')
+    school_holidays = pd.read_csv('/kaggle/input/school-holidays/school_holidays.csv')
         
     
     school_holidays['date'] = pd.to_datetime(school_holidays['date'])
@@ -97,10 +96,8 @@ def check_bank_holidays(X):
     Returns:
     - Series indicating if the dates are bank holidays.
     """
-    years = range(X['year'].min(), X['year'].max() + 1)
-    bank_holidays = []
-    for year in years:
-        bank_holidays.extend(JoursFeries.for_year(year).values())
+    holidays = pd.read_csv('/kaggle/input/bank-holidays/bank_holidays.csv')['0']
+    bank_holidays = pd.to_datetime(holidays, format="%m%d%Y").dt.date.values.tolist()
 
     return X['date'].isin(bank_holidays).astype(int)
 
@@ -134,7 +131,7 @@ def add_weather_and_velib_features(X):
     """
     X = X.copy()  # Working with a copy to avoid modifying the original DataFrame
     
-    weather_data = pd.read_csv('../data/scaled_weather_data.csv')
+    weather_data = pd.read_csv('/kaggle/input/scaledweatherdata/scaled_weather_data.csv')
     weather_data['datetime'] = pd.to_datetime(weather_data['datetime'])
     
     # Merging weather data
@@ -143,11 +140,6 @@ def add_weather_and_velib_features(X):
                                     (weather_data['datetime'] <= X['date'].max())]
     merged_data = pd.merge(X, weather_data, how='left', left_on='date', right_on='datetime')
     merged_data.drop(columns=['datetime'], inplace=True)
-
-    # Merging velib statistics
-    # https://opendata.paris.fr/explore/dataset/velib-disponibilite-en-temps-reel/information/?disjunctive.name&disjunctive.is_installed&disjunctive.is_renting&disjunctive.is_returning&disjunctive.nom_arrondissement_communes
-    velib_stats = pd.read_csv('../data/velib_processed.csv')
-    merged_data = pd.merge(merged_data, velib_stats, how='left', on='site_id')
 
     return merged_data
 
@@ -171,33 +163,21 @@ def additional_features(X):
     return final_data
 
 
-    
-def _read_data(path, f_name):
-    data = pd.read_parquet(os.path.join(path, "data", f_name))
-    # Sort by date first, so that time based cross-validation would produce correct results
-    data = data.sort_values(["date", "counter_name"])
-    y_array = data[_target_column_name].values
-    X_df = data.drop([_target_column_name, "bike_count"], axis=1)
-    return X_df, y_array
-
-
-def get_train_data(path=".", basic=True):
-    if basic:
-        f_name = "train.parquet"
-    else:
-        f_name = "train_dropped.parquet.gzip"
-        
-    return _read_data(path, f_name)
-
-
-def get_test_data(path="."):
-    f_name = "test.parquet"
-    return _read_data(path, f_name)
-
+_target_column_name = "log_bike_count"
 
 # Load training and test data
-X_train, y_train = get_train_data("..", basic=False)
-X_test, y_test = get_test_data("..")
+data = pd.read_parquet('/kaggle/input/train-dropped-nan/train_dropped.parquet.gzip')
+# Sort by date first, so that time based cross-validation would produce correct results
+data = data.sort_values(["date", "counter_name"])
+y_train = data[_target_column_name].values
+X_train = data.drop([_target_column_name, "bike_count"], axis=1)
+
+data = pd.read_parquet('/kaggle/input/testing-file/test.parquet')
+# Sort by date first, so that time based cross-validation would produce correct results
+data = data.sort_values(["date", "counter_name"])
+y_test = data[_target_column_name].values
+X_test = data.drop([_target_column_name, "bike_count"], axis=1)
+
 
 # Path to the tuning results
 path_tuning = "tuning_results"
@@ -244,23 +224,30 @@ def init_pipe(cyclic=True):
     
     return feature_transformer, data_preprocessor
 
-# Load the best hyperparameters from tuning results
-xgb_params = pd.read_csv(os.path.join(path_tuning, 'tuning_XGB/best_True_False_all_cyclic_202312042346_results.csv'))
-xgb_max_params = xgb_params.loc[xgb_params['mean_test_score'] == xgb_params['mean_test_score'].max()]
-best_params = ast.literal_eval(xgb_max_params.params.values[0])
-params_new = {key.split('__')[1]: value for key, value in best_params.items()}
-
+params = {'colsample_bylevel': 0.5041435472696711,
+          'colsample_bynode': 0.537175516017131,
+          'colsample_bytree': 0.9467806263705418,
+          'gamma': 4.59514979237692,
+          'learning_rate': 0.10126221981149418,
+          'max_depth': 32,
+          'n_estimators': 238,
+          'reg_alpha': 0.7716220829480913,
+          'reg_lambda': 0.38660506655992255,
+          'subsample': 0.777860931304462
+         }
+    
 # Define and fit the XGBoost regression model pipeline
-model = XGBRegressor(**params_new)
+model = XGBRegressor(**params)
+
 feature_transformer, data_preprocessor = init_pipe()
 xgb_reg_pipe = make_pipeline(feature_transformer, data_preprocessor, model)
 xgb_reg_pipe.fit(X_train, y_train)
 
 # Prepare the test data and generate predictions
-final_test = pd.read_parquet(os.path.join("..", "data", "test_final.parquet"))
+final_test = pd.read_parquet(os.path.join("/kaggle/input/mdsb-2023/final_test.parquet"))
 final_test_pred = xgb_reg_pipe.predict(final_test)
 
 # Create and save the submission file
 submission = pd.DataFrame(final_test_pred, columns=['log_bike_count']).reset_index()
 submission.rename(columns={'index': 'Id'}, inplace=True)
-submission.to_csv("best_True_False_202312042258_results.csv", index=False)
+submission.to_csv("/kaggle/working/submission.csv", index=False)
