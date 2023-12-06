@@ -36,13 +36,13 @@ def optimize_model(model, param_grid, save_path, n_iter, parallel_jobs: int = 1,
         cyclic_condition = ("date_onehot", OneHotEncoder(handle_unknown="ignore"), date_features)
         # Removed: "day", "week", "weekday", 
 
-    numeric_features = ['temp', 'precip', 'cloudcover', 'windspeed', 'humidity']
-    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 
+    numeric_features = ['temp', 'precip', 'cloudcover', 'windspeed', 'humidity', 'velib_min', 'latitude', 'longitude']
+    # Removed: 'velib_mean', 'velib_std', 'velib_25%', 
 
     categorical_features = ["counter_name", "site_name", "year"]
 
-    binary_features = ["precipprob", "is_Bank_Holiday", "if_School_Holiday", "is_workday"]
-    # Removed:  "is_Rush_Hour", "in_Lockdown"
+    binary_features = ["precipprob", "is_Bank_Holiday", "if_School_Holiday", "is_workday", "in_Lockdown", "is_Rush_Hour"]
+    # Removed:
 
     # Function to transform and add additional features
     feature_transformer = FunctionTransformer(feature_engineering._additional_features)
