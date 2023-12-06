@@ -63,7 +63,7 @@ def encode_date_features(X):
         X[f'{col}_sin'] = X[col].replace(X[col].unique(), cos_transform)
 
     # Dropping the original date-related columns
-    return X#.drop(columns=['date', 'hour', 'weekday', 'day', 'week', 'month'])
+    return X
 
 def check_school_holidays(X):
     """
@@ -200,19 +200,18 @@ def init_pipe(cyclic=True):
     else:
         date_features = ["hour", "month"]
         cyclic_condition = ("date_onehot", OneHotEncoder(handle_unknown="ignore"), date_features)
-        # Removed: "day", "week", "weekday",
-        
-    numeric_features = ['temp', 'precip', 'cloudcover']
-    # Removed: 'velib_mean', 'velib_std', 'velib_min', 'velib_25%', 'latitude', 'longitude', 'windspeed', 'humidity'
-    
-    categorical_features = ["counter_name", "site_name"]
-    # Removed:  "year"
-    
-    binary_features = ["precipprob", "is_Bank_Holiday", "if_School_Holiday", "is_workday"]
-    # Removed:  "is_Rush_Hour", "in_Lockdown"
-    
+        # Removed: "day", "week", "weekday", 
+
+    numeric_features = ['temp', 'precip', 'cloudcover', 'windspeed', 'humidity', 'velib_min', 'latitude', 'longitude']
+    # Removed: 'velib_mean', 'velib_std', 'velib_25%', 
+
+    categorical_features = ["counter_name", "site_name", "year"]
+
+    binary_features = ["precipprob", "is_Bank_Holiday", "if_School_Holiday", "is_workday", "in_Lockdown", "is_Rush_Hour"]
+    # Removed:
+
     # Function to transform and add additional features
-    feature_transformer = FunctionTransformer(additional_features)
+    feature_transformer = FunctionTransformer(feature_engineering._additional_features)
 
     # Preprocessing pipeline
     data_preprocessor = ColumnTransformer([
@@ -221,20 +220,20 @@ def init_pipe(cyclic=True):
         ("binary_passthrough", "passthrough", binary_features),
         cyclic_condition
     ])
-    
+
     return feature_transformer, data_preprocessor
 
-params = {'colsample_bylevel': 0.5041435472696711,
-          'colsample_bynode': 0.537175516017131,
-          'colsample_bytree': 0.9467806263705418,
-          'gamma': 4.59514979237692,
-          'learning_rate': 0.10126221981149418,
-          'max_depth': 32,
-          'n_estimators': 238,
-          'reg_alpha': 0.7716220829480913,
-          'reg_lambda': 0.38660506655992255,
-          'subsample': 0.777860931304462
-         }
+params = {'colsample_bylevel': 0.581656400761972,
+ 'colsample_bynode': 0.8200386107664507,
+ 'colsample_bytree': 0.9615880546827551,
+ 'gamma': 3.2214343252131696,
+ 'learning_rate': 0.06492828175147727,
+ 'max_depth': 22,
+ 'n_estimators': 162,
+ 'reg_alpha': 1.1067526143124211,
+ 'reg_lambda': 1.2581608887925084,
+ 'subsample': 0.7684439793860398
+}
     
 # Define and fit the XGBoost regression model pipeline
 model = XGBRegressor(**params)
