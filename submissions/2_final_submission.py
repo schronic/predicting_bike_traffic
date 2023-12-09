@@ -76,7 +76,7 @@ def check_school_holidays(X):
     - Series indicating if the dates are school holidays.
     """
 
-    school_holidays = pd.read_csv('/kaggle/input/school-holidays/school_holidays.csv')
+    school_holidays = pd.read_csv('/kaggle/input/external-data/school_holidays.csv')
         
     
     school_holidays['date'] = pd.to_datetime(school_holidays['date'])
@@ -96,7 +96,7 @@ def check_bank_holidays(X):
     Returns:
     - Series indicating if the dates are bank holidays.
     """
-    holidays = pd.read_csv('/kaggle/input/bank-holidays/bank_holidays.csv')['0']
+    holidays = pd.read_csv('/kaggle/input/external-data/bank_holidays.csv')['0']
     bank_holidays = pd.to_datetime(holidays, format="%m%d%Y").dt.date.values.tolist()
 
     return X['date'].isin(bank_holidays).astype(int)
@@ -131,7 +131,7 @@ def add_weather_and_velib_features(X):
     """
     X = X.copy()  # Working with a copy to avoid modifying the original DataFrame
     
-    weather_data = pd.read_csv('/kaggle/input/scaledweatherdata/scaled_weather_data.csv')
+    weather_data = pd.read_csv('/kaggle/input/external-data/scaled_weather_data.csv')
     weather_data['datetime'] = pd.to_datetime(weather_data['datetime'])
     
     # Merging weather data
@@ -140,6 +140,11 @@ def add_weather_and_velib_features(X):
                                     (weather_data['datetime'] <= X['date'].max())]
     merged_data = pd.merge(X, weather_data, how='left', left_on='date', right_on='datetime')
     merged_data.drop(columns=['datetime'], inplace=True)
+    
+    # Merging velib statistics
+    # https://opendata.paris.fr/explore/dataset/velib-disponibilite-en-temps-reel/information/?disjunctive.name&disjunctive.is_installed&disjunctive.is_renting&disjunctive.is_returning&disjunctive.nom_arrondissement_communes
+    velib_stats = pd.read_csv('/kaggle/input/external-data/velib_processed.csv')
+    merged_data = pd.merge(merged_data, velib_stats, how='left', on='site_id')
 
     return merged_data
 
@@ -166,13 +171,13 @@ def additional_features(X):
 _target_column_name = "log_bike_count"
 
 # Load training and test data
-data = pd.read_parquet('/kaggle/input/train-dropped-nan/train_dropped.parquet.gzip')
+data = pd.read_parquet('/kaggle/input/external-data/train_dropped.parquet.gzip')
 # Sort by date first, so that time based cross-validation would produce correct results
 data = data.sort_values(["date", "counter_name"])
 y_train = data[_target_column_name].values
 X_train = data.drop([_target_column_name, "bike_count"], axis=1)
 
-data = pd.read_parquet('/kaggle/input/testing-file/test.parquet')
+data = pd.read_parquet('/kaggle/input/testset-data/test.parquet')
 # Sort by date first, so that time based cross-validation would produce correct results
 data = data.sort_values(["date", "counter_name"])
 y_test = data[_target_column_name].values
@@ -211,7 +216,7 @@ def init_pipe(cyclic=True):
     # Removed:
 
     # Function to transform and add additional features
-    feature_transformer = FunctionTransformer(feature_engineering._additional_features)
+    feature_transformer = FunctionTransformer(additional_features)
 
     # Preprocessing pipeline
     data_preprocessor = ColumnTransformer([
